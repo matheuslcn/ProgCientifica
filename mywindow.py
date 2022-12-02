@@ -2,7 +2,8 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon
 from mycanvas import *
 from mymodel import *
-from tkinter.simpledialog import askfloat
+from tkinter.simpledialog import askfloat, Tk
+
 
 class MyWindow(QMainWindow):
 
@@ -45,7 +46,13 @@ class MyWindow(QMainWindow):
             # comparar os pontos do modelo e do grid e ver quais pontos do grid estão dentro do modelo
             # cria outras estruturas para o json
             # exportar para json
-            n = askfloat("N", "Insira o valor de N",)
+            root = Tk()
+            root._temporary_ = True
+            root.withdraw()
+            n = askfloat("N", "Insira o valor de N",initialvalue=1.0)
+            
+            # n = QInputDialog.getDouble(self, "N", "Insira o valor de N")
+            # n = 1
             self.canvas.exportJson(n)
         elif a.text() == "contorno":
             print("criar as condições de contorno")

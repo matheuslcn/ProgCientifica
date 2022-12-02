@@ -14,6 +14,7 @@ from pprint import pprint
 from mygrid import MyGrid
 
 from tkinter.messagebox import showinfo
+from tkinter.simpledialog import Tk
 
 class MyCanvas(QtOpenGL.QGLWidget):
     
@@ -245,10 +246,22 @@ class MyCanvas(QtOpenGL.QGLWidget):
         return points
 
     def exportJson(self, espacamento):
+        print(espacamento)
         self.grid = MyGrid()
         pudim = self.m_hmodel.getPatches()
         if len(pudim) == 0:
+            root = Tk()
+            root._temporary_ = True
+            root.withdraw()
             showinfo("Erro", "Nenhuma região foi gerada")
+            # msgBox = QMessageBox()
+            # msgBox.setIcon(QMessageBox.Information)
+            # msgBox.setText("Nenhuma região foi gerada")
+            # msgBox.setWindowTitle("Erro")
+            # msgBox.setStandardButtons(QMessageBox.Ok)
+        # msgBox.buttonClicked.connect(msgButtonClick)
+
+            # returnValue = msgBox.exec()
             return
         BBs = []
         for bb in pudim:
@@ -282,3 +295,15 @@ class MyCanvas(QtOpenGL.QGLWidget):
 
         with open(f'data({self.grid.qtd_x * self.grid.qtd_y}p).json', 'w') as outfile:
             json.dump(json_data, outfile)
+
+    def showDialog():
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText("Message box pop up window")
+        msgBox.setWindowTitle("QMessageBox Example")
+        msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        # msgBox.buttonClicked.connect(msgButtonClick)
+
+        returnValue = msgBox.exec()
+        if returnValue == QMessageBox.Ok:
+            print('OK clicked')
