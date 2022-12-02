@@ -33,9 +33,9 @@ class MyGrid():
     ##obs: chamar após ter chamado o pega_bordas
     ##obs: ToDo-> trocar no linha.append((i,j,True)) o i e j pelas posições dos pontos
     def preencheBB(self, espacamento):
-        qtd_x = int(self.max_x - self.min_x)
+        qtd_x = int(self.max_x - self.min_x) + 1
         self.qtd_x = int(qtd_x/espacamento)
-        qtd_y = int(self.max_y - self.min_y)
+        qtd_y = int(self.max_y - self.min_y) + 1
         self.qtd_y = int(qtd_y/espacamento)
         for i in range(self.qtd_x):
             linha = []

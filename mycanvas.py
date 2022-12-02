@@ -13,6 +13,8 @@ import json
 from pprint import pprint
 from mygrid import MyGrid
 
+from tkinter.messagebox import showinfo
+
 class MyCanvas(QtOpenGL.QGLWidget):
     
     def __init__(self):
@@ -126,6 +128,15 @@ class MyCanvas(QtOpenGL.QGLWidget):
                     glVertex2f(ptc[0].getX(), ptc[0].getY())
                     glVertex2f(ptc[1].getX(), ptc[1].getY())
                 glEnd()
+
+        if self.grid:
+            for line in self.grid.grid:
+                for point in line:
+                    if point[2]:
+                        glColor3f(0.0, 0.0, 0.0)
+                        glBegin(GL_POINTS)
+                        glVertex2f(point[0], point[1])
+                        glEnd()
         glEndList()
 
 
@@ -236,6 +247,9 @@ class MyCanvas(QtOpenGL.QGLWidget):
     def exportJson(self, espacamento):
         self.grid = MyGrid()
         pudim = self.m_hmodel.getPatches()
+        if len(pudim) == 0:
+            showinfo("Erro", "Nenhuma região foi gerada")
+            return
         BBs = []
         for bb in pudim:
             BBs.append(bb.getBoundBox())
@@ -245,6 +259,8 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.grid.preencheBB(espacamento)
         # pprint(self.grid.grid)
         self.grid.atualiza_grid(pudim)
+        self.update()
+        self.repaint()
         connect = self.grid.pega_matriz_connect()
         # pprint(connect)
         pontos = self.grid.gera_pontos()
@@ -266,5 +282,3 @@ class MyCanvas(QtOpenGL.QGLWidget):
 
         with open(f'data({self.grid.qtd_x * self.grid.qtd_y}p).json', 'w') as outfile:
             json.dump(json_data, outfile)
-        
-        
