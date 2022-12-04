@@ -31,6 +31,10 @@ class MyWindow(QMainWindow):
         inicial = QAction(QIcon(),"inicial",self)
         tb.addAction(inicial)
 
+        # confirmar as condições
+        confirmar = QAction(QIcon(),"confirmar",self)
+        tb.addAction(confirmar)
+
         tb.actionTriggered[QAction].connect(self.tbpressed)
 
 
@@ -45,12 +49,17 @@ class MyWindow(QMainWindow):
             # comparar os pontos do modelo e do grid e ver quais pontos do grid estão dentro do modelo
             # cria outras estruturas para o json
             # exportar para json
-            n = askfloat("N", "Insira o valor de N",)
+            n = askfloat("N", "Insira o valor de N")
             self.canvas.exportJson(n)
         elif a.text() == "contorno":
             print("criar as condições de contorno")
-            pass
+            self.canvas.create_shape()
+
         elif a.text() == "inicial":
             print("criar as condições iniciais")
-            pass
+            
+        elif a.text() == "confirmar":
+            print("confirmar as condições")
+            self.canvas.confirm()
+            
 

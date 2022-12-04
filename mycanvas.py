@@ -34,6 +34,7 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.m_controller = HeController(self.m_hmodel)
         self.colorList = [(1,0,0),(0,1,0),(0,0,1),(1,1,0),(1,0,1),(0,1,1),(1,0.5,0.5),(0.5,1,0.5),(0.5,0.5,1)]
         self.grid = None
+        self.is_getting_shape = False
 
     def initializeGL(self):
         #glClearColor(1.0,1.0,1.0,1.0)
@@ -82,12 +83,20 @@ class MyCanvas(QtOpenGL.QGLWidget):
         # for vtx in verts:
         #     glVertex2f(vtx.getX(), vtx.getY())
         # glEnd()
-        glColor3f(1.0, 0.0, 0.0)
+        glColor(1.0, 0.0, 0.0)
         glBegin(GL_LINE_STRIP)
-        glVertex2f(pt0_U.x(), pt0_U.y())
-        glVertex2f(pt1_U.x(), pt1_U.y())
-        # glVertex2f(self.m_pt0.x(), self.m_pt0.y())
-        # glVertex2f(self.m_pt1.x(), self.m_pt1.y())
+        if self.is_getting_shape:
+            glVertex2f(pt0_U.x(), pt0_U.y())
+            glVertex2f(pt0_U.x(), pt1_U.y())
+            glVertex2f(pt1_U.x(), pt1_U.y())
+            glVertex2f(pt1_U.x(), pt0_U.y())
+            glVertex2f(pt0_U.x(), pt0_U.y())
+
+        else:
+            glVertex2f(pt0_U.x(), pt0_U.y())
+            glVertex2f(pt1_U.x(), pt1_U.y())
+            # glVertex2f(self.m_pt0.x(), self.m_pt0.y())
+            # glVertex2f(self.m_pt1.x(), self.m_pt1.y())
         glEnd()
         if not((self.m_model == None) and (self.m_model.isEmpty())):
             verts = self.m_model.getVerts()
@@ -137,6 +146,8 @@ class MyCanvas(QtOpenGL.QGLWidget):
                         glBegin(GL_POINTS)
                         glVertex2f(point[0], point[1])
                         glEnd()
+
+        
         glEndList()
 
 
@@ -217,12 +228,12 @@ class MyCanvas(QtOpenGL.QGLWidget):
             return
         pt0_U = self.convertPtCoordsToUniverse(self.m_pt0)
         pt1_U = self.convertPtCoordsToUniverse(self.m_pt1)
-        self.m_model.setCurve(pt0_U.x(),pt0_U.y(),pt1_U.x(),pt1_U.y())
 
-        p0 = Point(pt0_U.x(), pt0_U.y())
-        p1 = Point(pt1_U.x(), pt1_U.y())
-        segment = Line(p0, p1)
-        self.m_controller.insertSegment(segment, 0.01)
+        if self.is_getting_shape:
+            self.set_curve_on_shape(pt0_U, pt1_U)
+        else:
+            self.set_curve_on_model(pt0_U, pt1_U)
+
         self.update()
         self.repaint()
 
@@ -282,3 +293,44 @@ class MyCanvas(QtOpenGL.QGLWidget):
 
         with open(f'data({self.grid.qtd_x * self.grid.qtd_y}p).json', 'w') as outfile:
             json.dump(json_data, outfile)
+
+    def create_shape(self):
+        self.is_getting_shape = True
+        patches = self.m_hmodel.getPatches()
+        # desenha ou pega o bounding box
+        bb = self.m_hmodel.getBoundBox()
+        print(bb)
+        p1 = QtCore.QPointF(bb[0]-1, bb[2]-1)
+        p2 = QtCore.QPointF(bb[0]-1, bb[3]+1)
+        p3 = QtCore.QPointF(bb[1]+1, bb[3]+1)
+        p4 = QtCore.QPointF(bb[1]+1, bb[2]-1)
+        self.set_curve_on_model(p1, p2)
+        self.set_curve_on_model(p2, p3)
+        self.set_curve_on_model(p3, p4)
+        self.set_curve_on_model(p4, p1)
+        # pega o patch do contorno
+        patches2 = self.m_hmodel.getPatches()
+
+        p = [p for p in patches2 if p not in patches][0]
+
+        pts = p.getPoints()
+        for pt in pts:
+            print(f"({pt.getX()}, {pt.getY()})")
+        
+        
+
+    def set_curve_on_model(self, pt0_U, pt1_U):
+        self.m_model.setCurve(pt0_U.x(),pt0_U.y(),pt1_U.x(),pt1_U.y())
+        p0 = Point(pt0_U.x(), pt0_U.y())
+        p1 = Point(pt1_U.x(), pt1_U.y())
+        segment = Line(p0, p1)
+        self.m_controller.insertSegment(segment, 0.01)
+
+    def set_curve_on_shape(self, pt0_U, pt1_U):
+        pass
+
+    def confirm(self):
+        self.is_getting_shape = False
+        self.update()
+        self.repaint()
+
