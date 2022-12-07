@@ -32,6 +32,10 @@ class MyWindow(QMainWindow):
         inicial = QAction(QIcon(),"inicial",self)
         tb.addAction(inicial)
 
+        # confirmar as condições
+        confirmar = QAction(QIcon(),"confirmar",self)
+        tb.addAction(confirmar)
+
         tb.actionTriggered[QAction].connect(self.tbpressed)
 
 
@@ -46,6 +50,7 @@ class MyWindow(QMainWindow):
             # comparar os pontos do modelo e do grid e ver quais pontos do grid estão dentro do modelo
             # cria outras estruturas para o json
             # exportar para json
+<<<<<<< HEAD
             root = Tk()
             root._temporary_ = True
             root.withdraw()
@@ -53,11 +58,19 @@ class MyWindow(QMainWindow):
             
             # n = QInputDialog.getDouble(self, "N", "Insira o valor de N")
             # n = 1
+=======
+            n = askfloat("N", "Insira o valor de N")
+>>>>>>> 73a794a8d7f85b62a08c6ed7a78bb5cf034a92ce
             self.canvas.exportJson(n)
         elif a.text() == "contorno":
             print("criar as condições de contorno")
-            pass
+            self.canvas.create_shape()
+
         elif a.text() == "inicial":
             print("criar as condições iniciais")
-            pass
+            
+        elif a.text() == "confirmar":
+            print("confirmar as condições")
+            self.canvas.confirm()
+            
 
