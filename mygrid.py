@@ -13,6 +13,7 @@ class MyGrid():
         self.min_y = INFINITY
         self.max_x = -INFINITY
         self.max_y = -INFINITY
+        self.espacamento = 0
 
     ##pega o tamanho maximo da da imagem baseado na boudBox de cada face
     ##entrada: Lista de boundBoxes
@@ -33,6 +34,7 @@ class MyGrid():
     ##obs: chamar após ter chamado o pega_bordas
     ##obs: ToDo-> trocar no linha.append((i,j,True)) o i e j pelas posições dos pontos
     def preencheBB(self, espacamento):
+        self.espacamento = espacamento
         qtd_x = int(self.max_x - self.min_x) + 1
         self.qtd_x = int(qtd_x/espacamento)
         qtd_y = int(self.max_y - self.min_y) + 1
@@ -46,7 +48,7 @@ class MyGrid():
                     "isInside": False,
                     "pos": -1,
                     "isOutline": 0,
-                    "outline": 0
+                    "condition": 0
                 }
                 linha.append(point)
             self.grid.append(linha)
@@ -149,55 +151,123 @@ class MyGrid():
                         p["pos"] = count
                         count += 1
 
-    def atualiza_outline(self, pt1, pt2, direction):
+    def atualiza_outline(self, pt1, pt2, direction, condition):
         if direction == 0: # direira
-            return self.atualiza_esquerda(pt1, pt2)
+            return self.atualiza_esquerda(pt1, pt2, condition)
         elif direction == 1: # esquerda
-            return self.atualiza_direita(pt1, pt2)
+            return self.atualiza_direita(pt1, pt2, condition)
         elif direction == 2: # cima
-            return self.atualiza_cima(pt1, pt2)
+            return self.atualiza_cima(pt1, pt2, condition)
         elif direction == 3: # baixo
-            return self.atualiza_baixo(pt1, pt2)
-
-    def atualiza_cima(self, pt1, pt2):
-        print("atualizando cima")
-        pts = []
-        print(self.qtd_x)
-        for i in range(int(self.min_x), int(self.max_x+1), int((self.max_x-self.min_x)/self.qtd_x)):
-            j = self.min_y
-            while j <= self.max_y and not self.grid[i][j]["isInside"]:
-                j += (self.max_y-self.min_y)/self.qtd_y
-            if j == self.qtd_y:
-                break
-            print(j)
-            print(self.grid[i][j]["isInside"])
-            min_x = min(pt1.x(), pt2.x())
-            max_x = max(pt1.x(), pt2.x())
-            min_y = min(pt1.y(), pt2.y())
-            max_y = max(pt1.y(), pt2.y())
-            if (min_x <= self.grid[i][j]["x"] and self.grid[i][j]["x"] <= max_x and
-                min_y <= self.grid[i][j]["y"] and self.grid[i][j]["y"] <= max_y): 
-                    pts.append(self.grid[i][j])
-        print(pts)
-        return pts
+            return self.atualiza_baixo(pt1, pt2, condition)
 
     def isInsideBox(self, pt, pt1, pt2):
         min_x = min(pt1.x(), pt2.x())
         max_x = max(pt1.x(), pt2.x())
         min_y = min(pt1.y(), pt2.y())
         max_y = max(pt1.y(), pt2.y())
-        return (min_x <= pt.x() and pt.x() <= max_x and
-            min_y <= pt.y() and pt.y() <= max_y)
+        return (min_x <= pt['x'] and pt['x'] <= max_x and
+            min_y <= pt['y'] and pt['y'] <= max_y)
 
-                
+    def atualiza_cima(self, pt1, pt2, condition):
+        print("atualizando cima")
+        pts = []
+        pos = []
+        print(self.qtd_x)
+        for i, linha in enumerate(self.grid):
+            for j, casa in enumerate(linha):
+                if(not self.isInsideBox(casa, pt1, pt2)):
+                    continue
+                if(casa["isInside"]):
+                    if(j < (len(linha)-1)):
+                        if(not self.grid[i][j+1]["isInside"]):
+                            casa["isOutline"] = 1
+                            casa["condition"] = condition
+                            pts.append(casa)
+                            pos.append((i,j))
+                    else:
+                        casa["isOutline"] = 1
+                        casa["condition"] = condition
+                        pts.append(casa)
+                        pos.append((i,j))
+        for p in pos:
+            print(f"x:{p[0]} y:{p[1]}")
+        return pts
 
-    def atualiza_baixo(self, pt1, pt2):
-        pass
+    def atualiza_baixo(self, pt1, pt2, condition):
+        print("atualizando cima")
+        pts = []
+        pos = []
+        # print(self.qtd_x)
+        for i, linha in enumerate(self.grid):
+            for j, casa in enumerate(linha):
+                if(not self.isInsideBox(casa, pt1, pt2)):
+                    continue
+                if(casa["isInside"]):
+                    if(j > 0):
+                        if(not self.grid[i][j-1]["isInside"]):
+                            casa["isOutline"] = 1
+                            casa["condition"] = condition
+                            pts.append(casa)
+                            pos.append((i,j))
+                            print(f"{i}, {j}: {self.max_x-casa['x']}")
+                    else:
+                        casa["isOutline"] = 1
+                        casa["condition"] = condition
+                        pts.append(casa)
+                        pos.append((i,j))
+        for p in pos:
+            print(f"x:{p[0]} y:{p[1]}")
+        return pts
     
-    def atualiza_direita(self, pt1, pt2):
-        pass
+    def atualiza_esquerda(self, pt1, pt2, condition):
+        print("atualizando cima")
+        pts = []
+        pos = []
+        print(self.qtd_x)
+        for i, linha in enumerate(self.grid):
+            for j, casa in enumerate(linha):
+                if(not self.isInsideBox(casa, pt1, pt2)):
+                    continue
+                if(casa["isInside"]):
+                    if(i < (len(self.grid)-1)):
+                        if(not self.grid[i+1][j]["isInside"]):
+                            casa["isOutline"] = 1
+                            casa["condition"] = condition
+                            pts.append(casa)
+                            pos.append((i,j))
+                    else:
+                        casa["isOutline"] = 1
+                        casa["condition"] = condition
+                        pts.append(casa)
+                        pos.append((i,j))
+        for p in pos:
+            print(f"x:{p[0]} y:{p[1]}")
+        return pts
 
-    def atualiza_esquerda(self, pt1, pt2):
-        pass
+    def atualiza_direita(self, pt1, pt2, condition):
+        print("atualizando cima")
+        pts = []
+        pos = []
+        print(self.qtd_x)
+        for i, linha in enumerate(self.grid):
+            for j, casa in enumerate(linha):
+                if(not self.isInsideBox(casa, pt1, pt2)):
+                    continue
+                if(casa["isInside"]):
+                    if(i > 0):
+                        if(not self.grid[i-1][j]["isInside"]):
+                            casa["isOutline"] = 1
+                            casa["condition"] = condition
+                            pts.append(casa)
+                            pos.append((i,j))
+                    else:
+                        casa["isOutline"] = 1
+                        casa["condition"] = condition
+                        pts.append(casa)
+                        pos.append((i,j))
+        for p in pos:
+            print(f"x:{p[0]} y:{p[1]}")
+        return pts
         
 

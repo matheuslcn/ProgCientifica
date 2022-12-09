@@ -15,6 +15,8 @@ from mygrid import MyGrid
 
 from tkinter.messagebox import showinfo
 from tkinter import Radiobutton, Tk, Button, IntVar
+from tkinter.simpledialog import askfloat
+
 
 class MyCanvas(QtOpenGL.QGLWidget):
     
@@ -23,10 +25,10 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.m_model = None
         self.m_w = 0 # width: GL canvas horizontal size
         self.m_h = 0 # height: GL canvas vertical size
-        self.m_L = -50.0
-        self.m_R = 50.0
-        self.m_B = -50.0
-        self.m_T = 50.0
+        self.m_L = -20.0
+        self.m_R = 20.0
+        self.m_B = -20.0
+        self.m_T = 20.0
         self.list = None
         self.m_buttonPressed = False
         self.m_pt0 = QtCore.QPointF(0.0,0.0)
@@ -157,8 +159,6 @@ class MyCanvas(QtOpenGL.QGLWidget):
                 glVertex2f(point["x"], point["y"])
                 glEnd()
 
-
-        
         glEndList()
 
 
@@ -346,8 +346,9 @@ class MyCanvas(QtOpenGL.QGLWidget):
         button = Button(root, text="Confirmar", command=root.destroy)
         button.pack()
         root.mainloop()
+        condition = askfloat("N", "Insira o valor da condição de contorno", initialvalue=1.0)
         checked = var.get()
-        self.outline.append(self.grid.atualiza_outline(pt0_U, pt1_U, checked))
+        self.outline.append(self.grid.atualiza_outline(pt0_U, pt1_U, checked, condition))
 
 
     def confirm(self):
