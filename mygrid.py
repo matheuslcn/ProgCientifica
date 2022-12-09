@@ -131,7 +131,7 @@ class MyGrid():
 
 
     def atualiza_grid(self, patches):
-        count = 0
+        count = 1
         for linha in self.grid:
             for p in linha:
                 point = Point(p[0], p[1])       
