@@ -296,6 +296,12 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.repaint()
 
     def exportJson(self):
+        return
+
+    def pviExportJson(self):
+        return
+
+    def pvcExportJson(self):
         connect = self.grid.pega_matriz_connect()
         # pprint(connect)
         pontos = self.grid.gera_pontos()
