@@ -49,11 +49,12 @@ class MyWindow(QMainWindow):
             # comparar os pontos do modelo e do grid e ver quais pontos do grid estão dentro do modelo
             # cria outras estruturas para o json
             # exportar para json
-            n = askfloat("N", "Insira o valor de N")
             self.canvas.exportJson(n)
+            
         elif a.text() == "contorno":
             print("criar as condições de contorno")
-            self.canvas.create_shape()
+            n = askfloat("N", "Insira o valor de N", initialvalue=1.0)
+            self.canvas.create_outline(n)
 
         elif a.text() == "inicial":
             print("criar as condições iniciais")

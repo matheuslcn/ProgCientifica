@@ -40,7 +40,15 @@ class MyGrid():
         for i in range(self.qtd_x):
             linha = []
             for j in range(self.qtd_y):
-                linha.append([self.min_x + i * espacamento, self.min_y + j * espacamento,False, -1])
+                point  = {
+                    "x": self.min_x + i * espacamento,
+                    "y": self.min_y + j * espacamento,
+                    "isInside": False,
+                    "pos": -1,
+                    "isOutline": 0,
+                    "outline": 0
+                }
+                linha.append(point)
             self.grid.append(linha)
 
     ##troca booleano que diz que está dentro para false (dizendo que está fora)
@@ -48,9 +56,9 @@ class MyGrid():
     ##entrada: posY-> posição da coluna no grid
     ##entrada: SouN-> booleando dizendo se está dentro ou fora
     def set_ponto_fora(self, posX, posY, SouN, pos): 
-        self.grid[posX][posY][2] = SouN
+        self.grid[posX][posY]["isInside"] = SouN
         if(SouN):
-            self.grid[posX][posY][3] = pos
+            self.grid[posX][posY]["pos"] = pos
             return pos+1
         return pos
 
@@ -64,19 +72,19 @@ class MyGrid():
         for j in range(self.qtd_y):
             for i in range(self.qtd_x):
                 linha = [0]
-                if(self.grid[i][j][2]):
-                    if( j > 0 and self.grid[i][j-1][2]):
+                if(self.grid[i][j]["isInside"]):
+                    if( j > 0 and self.grid[i][j-1]["isInside"]):
                         linha[0] += 1
-                        linha.append(self.grid[i][j-1][3])
-                    if( i > 0 and self.grid[i-1][j][2]):
+                        linha.append(self.grid[i][j-1]["pos"])
+                    if( i > 0 and self.grid[i-1][j]["isInside"]):
                         linha[0] += 1
-                        linha.append(self.grid[i-1][j][3])
-                    if( j < (self.qtd_y - 1) and self.grid[i][j+1][2]):
+                        linha.append(self.grid[i-1][j]["pos"])
+                    if( j < (self.qtd_y - 1) and self.grid[i][j+1]["isInside"]):
                         linha[0] += 1
-                        linha.append(self.grid[i][j+1][3])
-                    if( i < (self.qtd_x - 1) and self.grid[i+1][j][2]):
+                        linha.append(self.grid[i][j+1]["pos"])
+                    if( i < (self.qtd_x - 1) and self.grid[i+1][j]["isInside"]):
                         linha[0] += 1
-                        linha.append(self.grid[i+1][j][3])
+                        linha.append(self.grid[i+1][j]["pos"])
                     for _ in range(5 - len(linha)):
                         linha.append(0)
                     connect.append(linha)    
@@ -90,7 +98,7 @@ class MyGrid():
         restricoes = []
         for j in range(self.qtd_y):
             for i in range(self.qtd_x):
-                if(self.grid[i][j][2]):
+                if(self.grid[i][j]["isInside"]):
                     if(j == 0):
                         ponto = [1, 1]
                         restricoes.append(ponto)
@@ -105,10 +113,10 @@ class MyGrid():
         pontos = []
         for j in range(self.qtd_y):
             for i in range(self.qtd_x):
-                if(self.grid[i][j][2]):
+                if(self.grid[i][j]["isInside"]):
                     ponto = []
-                    ponto.append(self.grid[i][j][0])
-                    ponto.append(self.grid[i][j][1])
+                    ponto.append(self.grid[i][j]["x"])
+                    ponto.append(self.grid[i][j]["y"])
                     pontos.append(ponto)
         return pontos
 
@@ -120,7 +128,7 @@ class MyGrid():
         forcas = []
         for j in range(self.qtd_y):
             for i in range(self.qtd_x):
-                if(self.grid[i][j][2]):
+                if(self.grid[i][j]["isInside"]):
                     if(j == self.qtd_y-1):
                         ponto = [-1000.0, 0.0]
                         forcas.append(ponto)
@@ -134,11 +142,62 @@ class MyGrid():
         count = 0
         for linha in self.grid:
             for p in linha:
-                point = Point(p[0], p[1])       
+                point = Point(p["x"], p["y"])       
                 for patch in patches:
                     if (patch.isPointInside(point)):
-                        p[2] = True
-                        p[3] = count
+                        p["isInside"] = True
+                        p["pos"] = count
                         count += 1
 
+    def atualiza_outline(self, pt1, pt2, direction):
+        if direction == 0: # direira
+            return self.atualiza_esquerda(pt1, pt2)
+        elif direction == 1: # esquerda
+            return self.atualiza_direita(pt1, pt2)
+        elif direction == 2: # cima
+            return self.atualiza_cima(pt1, pt2)
+        elif direction == 3: # baixo
+            return self.atualiza_baixo(pt1, pt2)
+
+    def atualiza_cima(self, pt1, pt2):
+        print("atualizando cima")
+        pts = []
+        print(self.qtd_x)
+        for i in range(int(self.min_x), int(self.max_x+1), int((self.max_x-self.min_x)/self.qtd_x)):
+            j = self.min_y
+            while j <= self.max_y and not self.grid[i][j]["isInside"]:
+                j += (self.max_y-self.min_y)/self.qtd_y
+            if j == self.qtd_y:
+                break
+            print(j)
+            print(self.grid[i][j]["isInside"])
+            min_x = min(pt1.x(), pt2.x())
+            max_x = max(pt1.x(), pt2.x())
+            min_y = min(pt1.y(), pt2.y())
+            max_y = max(pt1.y(), pt2.y())
+            if (min_x <= self.grid[i][j]["x"] and self.grid[i][j]["x"] <= max_x and
+                min_y <= self.grid[i][j]["y"] and self.grid[i][j]["y"] <= max_y): 
+                    pts.append(self.grid[i][j])
+        print(pts)
+        return pts
+
+    def isInsideBox(self, pt, pt1, pt2):
+        min_x = min(pt1.x(), pt2.x())
+        max_x = max(pt1.x(), pt2.x())
+        min_y = min(pt1.y(), pt2.y())
+        max_y = max(pt1.y(), pt2.y())
+        return (min_x <= pt.x() and pt.x() <= max_x and
+            min_y <= pt.y() and pt.y() <= max_y)
+
+                
+
+    def atualiza_baixo(self, pt1, pt2):
+        pass
+    
+    def atualiza_direita(self, pt1, pt2):
+        pass
+
+    def atualiza_esquerda(self, pt1, pt2):
+        pass
+        
 

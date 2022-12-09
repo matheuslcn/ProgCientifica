@@ -14,6 +14,7 @@ from pprint import pprint
 from mygrid import MyGrid
 
 from tkinter.messagebox import showinfo
+from tkinter import Radiobutton, Tk, Button, IntVar
 
 class MyCanvas(QtOpenGL.QGLWidget):
     
@@ -32,9 +33,10 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.m_pt1 = QtCore.QPointF(0.0,0.0)
         self.m_hmodel = HeModel()
         self.m_controller = HeController(self.m_hmodel)
-        self.colorList = [(1,0,0),(0,1,0),(0,0,1),(1,1,0),(1,0,1),(0,1,1),(1,0.5,0.5),(0.5,1,0.5),(0.5,0.5,1)]
+        self.colorList = [(0,1,0),(0,0,1),(1,1,0),(1,0,1),(0,1,1),(1,0.5,0.5),(0.5,1,0.5),(0.5,0.5,1)]
         self.grid = None
-        self.is_getting_shape = False
+        self.is_getting_outline = False
+        self.outline = []
 
     def initializeGL(self):
         #glClearColor(1.0,1.0,1.0,1.0)
@@ -85,7 +87,7 @@ class MyCanvas(QtOpenGL.QGLWidget):
         # glEnd()
         glColor(1.0, 0.0, 0.0)
         glBegin(GL_LINE_STRIP)
-        if self.is_getting_shape:
+        if self.is_getting_outline:
             glVertex2f(pt0_U.x(), pt0_U.y())
             glVertex2f(pt0_U.x(), pt1_U.y())
             glVertex2f(pt1_U.x(), pt1_U.y())
@@ -141,11 +143,20 @@ class MyCanvas(QtOpenGL.QGLWidget):
         if self.grid:
             for line in self.grid.grid:
                 for point in line:
-                    if point[2]:
+                    if point["isInside"]:
                         glColor3f(0.0, 0.0, 0.0)
                         glBegin(GL_POINTS)
-                        glVertex2f(point[0], point[1])
+                        glVertex2f(point["x"], point["y"])
                         glEnd()
+        
+        
+        for ol in self.outline:
+            for point in ol:
+                glColor(1.0, 0.0, 0.0)
+                glBegin(GL_POINTS)
+                glVertex2f(point["x"], point["y"])
+                glEnd()
+
 
         
         glEndList()
@@ -229,8 +240,8 @@ class MyCanvas(QtOpenGL.QGLWidget):
         pt0_U = self.convertPtCoordsToUniverse(self.m_pt0)
         pt1_U = self.convertPtCoordsToUniverse(self.m_pt1)
 
-        if self.is_getting_shape:
-            self.set_curve_on_shape(pt0_U, pt1_U)
+        if self.is_getting_outline:
+            self.set_curve_on_outline(pt0_U, pt1_U)
         else:
             self.set_curve_on_model(pt0_U, pt1_U)
 
@@ -255,7 +266,7 @@ class MyCanvas(QtOpenGL.QGLWidget):
         points = model.getPoints()
         return points
 
-    def exportJson(self, espacamento):
+    def set_grid(self, espacamento):
         self.grid = MyGrid()
         pudim = self.m_hmodel.getPatches()
         if len(pudim) == 0:
@@ -272,6 +283,8 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.grid.atualiza_grid(pudim)
         self.update()
         self.repaint()
+
+    def exportJson(self):
         connect = self.grid.pega_matriz_connect()
         # pprint(connect)
         pontos = self.grid.gera_pontos()
@@ -294,30 +307,9 @@ class MyCanvas(QtOpenGL.QGLWidget):
         with open(f'data({self.grid.qtd_x * self.grid.qtd_y}p).json', 'w') as outfile:
             json.dump(json_data, outfile)
 
-    def create_shape(self):
-        self.is_getting_shape = True
-        patches = self.m_hmodel.getPatches()
-        # desenha ou pega o bounding box
-        bb = self.m_hmodel.getBoundBox()
-        print(bb)
-        p1 = QtCore.QPointF(bb[0]-1, bb[2]-1)
-        p2 = QtCore.QPointF(bb[0]-1, bb[3]+1)
-        p3 = QtCore.QPointF(bb[1]+1, bb[3]+1)
-        p4 = QtCore.QPointF(bb[1]+1, bb[2]-1)
-        self.set_curve_on_model(p1, p2)
-        self.set_curve_on_model(p2, p3)
-        self.set_curve_on_model(p3, p4)
-        self.set_curve_on_model(p4, p1)
-        # pega o patch do contorno
-        patches2 = self.m_hmodel.getPatches()
-
-        p = [p for p in patches2 if p not in patches][0]
-
-        pts = p.getPoints()
-        for pt in pts:
-            print(f"({pt.getX()}, {pt.getY()})")
-        
-        
+    def create_outline(self, espacamento):
+        self.is_getting_outline = True
+        self.set_grid(espacamento)
 
     def set_curve_on_model(self, pt0_U, pt1_U):
         self.m_model.setCurve(pt0_U.x(),pt0_U.y(),pt1_U.x(),pt1_U.y())
@@ -326,11 +318,29 @@ class MyCanvas(QtOpenGL.QGLWidget):
         segment = Line(p0, p1)
         self.m_controller.insertSegment(segment, 0.01)
 
-    def set_curve_on_shape(self, pt0_U, pt1_U):
-        pass
+    def set_curve_on_outline(self, pt0_U, pt1_U):
+        # criar um botao de radio pelo tkinter
+        root = Tk()
+        var = IntVar()
+        radio_dir = Radiobutton(root, text="Direita", variable=var, value=0)
+        radio_dir.pack()
+        radio_esq = Radiobutton(root, text="Esquerda", variable=var, value=1)
+        radio_esq.pack()
+        radio_cim = Radiobutton(root, text="Cima", variable=var, value=2)
+        radio_cim.pack()
+        radio_bai = Radiobutton(root, text="Baixo", variable=var, value=3)
+        radio_bai.pack()
+
+        # criar botao para confirmar no root
+        button = Button(root, text="Confirmar", command=root.destroy)
+        button.pack()
+        root.mainloop()
+        checked = var.get()
+        self.outline.append(self.grid.atualiza_outline(pt0_U, pt1_U, checked))
+
 
     def confirm(self):
-        self.is_getting_shape = False
+        self.is_getting_outline = False
         self.update()
         self.repaint()
 
