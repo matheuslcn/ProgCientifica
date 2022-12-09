@@ -54,11 +54,13 @@ class MyWindow(QMainWindow):
             
         elif a.text() == "contorno":
             print("criar as condições de contorno")
-            n = askfloat("N", "Insira o valor de N", initialvalue=1.0)
+            n = askfloat("N", "Insira o valor do espacamento", initialvalue=1.0)
             self.canvas.create_outline(n)
 
         elif a.text() == "inicial":
             print("criar as condições iniciais")
+            n = askfloat("N", "Insira o valor do espacamento", initialvalue=1.0)
+            self.canvas.create_initial_conditions(n)
             
         elif a.text() == "confirmar":
             print("confirmar as condições")

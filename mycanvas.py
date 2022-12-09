@@ -37,8 +37,9 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.m_controller = HeController(self.m_hmodel)
         self.colorList = [(0,1,0),(0,0,1),(1,1,0),(1,0,1),(0,1,1),(1,0.5,0.5),(0.5,1,0.5),(0.5,0.5,1)]
         self.grid = None
-        self.is_getting_outline = False
+        self.is_selecting = False
         self.outline = []
+        self.is_cc = False
 
     def initializeGL(self):
         #glClearColor(1.0,1.0,1.0,1.0)
@@ -89,7 +90,7 @@ class MyCanvas(QtOpenGL.QGLWidget):
         # glEnd()
         glColor(1.0, 0.0, 0.0)
         glBegin(GL_LINE_STRIP)
-        if self.is_getting_outline:
+        if self.is_selecting:
             glVertex2f(pt0_U.x(), pt0_U.y())
             glVertex2f(pt0_U.x(), pt1_U.y())
             glVertex2f(pt1_U.x(), pt1_U.y())
@@ -240,10 +241,14 @@ class MyCanvas(QtOpenGL.QGLWidget):
         pt0_U = self.convertPtCoordsToUniverse(self.m_pt0)
         pt1_U = self.convertPtCoordsToUniverse(self.m_pt1)
 
-        if self.is_getting_outline:
+        if not self.is_selecting:
+            self.set_curve_on_model(pt0_U, pt1_U)
+        elif self.is_cc:
             self.set_curve_on_outline(pt0_U, pt1_U)
         else:
-            self.set_curve_on_model(pt0_U, pt1_U)
+            pass
+
+            
 
         self.update()
         self.repaint()
@@ -294,13 +299,13 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.grid.atualiza_grid(pudim)
         self.update()
         self.repaint()
+   
 
-    def exportJson(self):
-        return
-
-    def pviExportJson(self):
-        return
-
+    def create_outline(self, espacamento):
+        self.is_cc = True
+        self.is_selecting = True
+        self.set_grid(espacamento)
+    
     def pvcExportJson(self):
         connect = self.grid.pega_matriz_connect()
         # pprint(connect)
@@ -323,10 +328,7 @@ class MyCanvas(QtOpenGL.QGLWidget):
 
         with open(f'data({self.grid.qtd_x * self.grid.qtd_y}p).json', 'w') as outfile:
             json.dump(json_data, outfile)
-
-    def create_outline(self, espacamento):
-        self.is_getting_outline = True
-        self.set_grid(espacamento)
+    
 
     def set_curve_on_model(self, pt0_U, pt1_U):
         self.m_model.setCurve(pt0_U.x(),pt0_U.y(),pt1_U.x(),pt1_U.y())
@@ -356,9 +358,20 @@ class MyCanvas(QtOpenGL.QGLWidget):
         checked = var.get()
         self.outline.append(self.grid.atualiza_outline(pt0_U, pt1_U, checked, condition))
 
+    def create_initial_conditions(self, espacamento):
+        self.is_cc = False
+        self.is_selecting = True
+        self.set_grid(espacamento)
+
+    def pviExportJson(self):
+            return
+    
+
 
     def confirm(self):
-        self.is_getting_outline = False
+        self.is_selecting = False
         self.update()
         self.repaint()
 
+    def exportJson(self):
+        return
