@@ -92,6 +92,30 @@ class MyGrid():
                     connect.append(linha)    
         return connect
 
+    
+    def pega_matriz_connect_contorno(self):
+        connect = []
+        for j in range(self.qtd_y):
+            for i in range(self.qtd_x):
+                linha = []
+                if(self.grid[i][j]["isInside"]):
+                    if( j > 0 and self.grid[i][j-1]["isInside"]):
+                        linha.append(self.grid[i][j-1]["pos"])
+                    else:
+                        linha.append(0)
+                    if( i > 0 and self.grid[i-1][j]["isInside"]):
+                        linha.append(self.grid[i-1][j]["pos"])
+                    else:
+                        linha.append(0)
+                    if( j < (self.qtd_y - 1) and self.grid[i][j+1]["isInside"]):
+                        linha.append(self.grid[i][j+1]["pos"])
+                    else:
+                        linha.append(0)
+                    if( i < (self.qtd_x - 1) and self.grid[i+1][j]["isInside"]):
+                        linha.append(self.grid[i+1][j]["pos"])  
+                    else:
+                        linha.append(0)
+        return connect
     ##gera uma matriz N x 2 para indicar quais pontos não se movem
     ##obs: função restringindo a penas a 1ª coluna
     ##obs: ToDo-> necessario mudar a função para poder restringir de outras formas
