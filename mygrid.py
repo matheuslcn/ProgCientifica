@@ -195,7 +195,7 @@ class MyGrid():
         return pts
 
     def atualiza_baixo(self, pt1, pt2, condition):
-        print("atualizando cima")
+        print("atualizando baixo")
         pts = []
         pos = []
         # print(self.qtd_x)
@@ -221,7 +221,7 @@ class MyGrid():
         return pts
     
     def atualiza_esquerda(self, pt1, pt2, condition):
-        print("atualizando cima")
+        print("atualizando esquerda")
         pts = []
         pos = []
         print(self.qtd_x)
@@ -246,7 +246,7 @@ class MyGrid():
         return pts
 
     def atualiza_direita(self, pt1, pt2, condition):
-        print("atualizando cima")
+        print("atualizando direita")
         pts = []
         pos = []
         print(self.qtd_x)
