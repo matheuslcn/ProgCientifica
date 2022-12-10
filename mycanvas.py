@@ -402,6 +402,7 @@ class MyCanvas(QtOpenGL.QGLWidget):
         json_data["tampasso"] = h
         json_data["mass"] = mass
         json_data["kspr"] = k
+        json_data["espacamento"] = self.grid.espacamento
         json_data["coords"] = pontos
         json_data["connect"] = connect
         json_data["F"] = forca

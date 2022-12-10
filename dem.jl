@@ -46,7 +46,26 @@ function readJSON(_file::String)
             end
             # @show restrs
         end
-        return ne,x0,y0, conect, F, restrs
+        if haskey(data, "ponto")
+            u33 = data["ponto"] * 2 - 1
+        end
+        if haskey(data, "qtdpassos")
+            N = data["qtdpassos"]
+        end
+        if haskey(data, "tampasso")
+            h = data["tampasso"]
+        end
+        if haskey(data, "mass")
+            mass = data["mass"]
+        end
+        if haskey(data, "kspr")
+            kspr = data["kspr"]
+        end
+        if haskey(data, "espacamento")
+            raio = data["espacamento"]
+        end
+        raio = 1
+        return ne,x0,y0, conect, F, restrs, u33, N, h, mass, kspr, raio
     end
 end
 
@@ -90,13 +109,13 @@ end
 function main(_file::String)
     # println(".DEM")
     # read input file
-    N = 600
-    h = 0.00004
-    ne, x0, y0, conect, F, restrs = readJSON(_file)
+    # N = 600
+    # h = 0.00004
+    ne, x0, y0, conect, F, restrs, u33, N, h, mass, kspr, raio = readJSON(_file)
     ndofs = 2*ne
-    raio = 1.0
-    mass = 7850.0
-    kspr = 210000000000.0
+    # raio = 1.0
+    # mass = 7850.0
+    # kspr = 210000000000.0
     # conect = [
     #     2    2    4    0    0
     #     3    1    3    5    0
@@ -242,7 +261,7 @@ function main(_file::String)
             v .+= a .* (0.5*h)
             # criaTabela(i-1, 10, "v", v, ndofs)
             # plot
-            res[i] = u[33]
+            res[i] = u[u33]
             # criaTabela(i-1, 11, "res", res, N)
 
         end
