@@ -14,6 +14,8 @@ class MyGrid():
         self.max_x = -INFINITY
         self.max_y = -INFINITY
         self.espacamento = 0
+        self.len_pontos = 0
+        self.u33 = 1
 
     ##pega o tamanho maximo da da imagem baseado na boudBox de cada face
     ##entrada: Lista de boundBoxes
@@ -48,7 +50,9 @@ class MyGrid():
                     "isInside": False,
                     "pos": -1,
                     "isOutline": 0,
-                    "condition": 0
+                    "condition": 0,
+                    "forca": [0, 0],
+                    "restricao": [0, 0]
                 }
                 linha.append(point)
             self.grid.append(linha)
@@ -115,6 +119,7 @@ class MyGrid():
                         linha.append(self.grid[i+1][j]["pos"])  
                     else:
                         linha.append(0)
+                connect.append(linha)
         return connect
     ##gera uma matriz N x 2 para indicar quais pontos não se movem
     ##obs: função restringindo a penas a 1ª coluna
@@ -125,12 +130,8 @@ class MyGrid():
         for j in range(self.qtd_y):
             for i in range(self.qtd_x):
                 if(self.grid[i][j]["isInside"]):
-                    if(j == 0):
-                        ponto = [1, 1]
-                        restricoes.append(ponto)
-                    else:
-                        ponto = [0, 0]
-                        restricoes.append(ponto)
+                    ponto = self.grid[i][j]["restricao"]
+                    restricoes.append(ponto)
         return restricoes
 
     ##gera uma matriz N x 2 com as posições de cada ponto de conexao dentro da imagem
@@ -155,25 +156,28 @@ class MyGrid():
         for j in range(self.qtd_y):
             for i in range(self.qtd_x):
                 if(self.grid[i][j]["isInside"]):
-                    if(j == self.qtd_y-1):
-                        ponto = [-1000.0, 0.0]
-                        forcas.append(ponto)
-                    else:
-                        ponto = [0.0, 0.0]
-                        forcas.append(ponto)
+                    ponto = self.grid[i][j]["forca"]
+                    forcas.append(ponto)
         return forcas
 
+    def gera_CC(self):
+        CC = []
+        for j in range(self.qtd_y):
+            for i in range(self.qtd_x):
+                if(self.grid[i][j]["isInside"]):
+                    CC.append([self.grid[i][j]["isOutline"],self.grid[i][j]["condition"]])
+        return CC
 
     def atualiza_grid(self, patches):
-        count = 1
+        self.len_pontos = 1
         for linha in self.grid:
             for p in linha:
                 point = Point(p["x"], p["y"])       
                 for patch in patches:
                     if (patch.isPointInside(point)):
                         p["isInside"] = True
-                        p["pos"] = count
-                        count += 1
+                        p["pos"] = self.len_pontos
+                        self.len_pontos += 1
 
     def atualiza_outline(self, pt1, pt2, direction, condition):
         if direction == 0: # direira
@@ -294,4 +298,35 @@ class MyGrid():
             print(f"x:{p[0]} y:{p[1]}")
         return pts
         
+    def atualiza_forca(self, pt1, pt2, F_in_x, F_in_y):
+        pts = []
+        for i, linha in enumerate(self.grid):
+            for j, casa in enumerate(linha):
+                if(not self.isInsideBox(casa, pt1, pt2)):
+                    continue
+                if(casa["isInside"]):
+                    casa["forca"] = [F_in_x, F_in_y]
+                    pts.append(casa)
+                    print(f"adcionado força em: {casa}")
+        return pts
+        
 
+    def atualiza_restricao(self, pt1, pt2, is_res_x, is_res_y):
+        pts = []
+        for i, linha in enumerate(self.grid):
+            for j, casa in enumerate(linha):
+                if(not self.isInsideBox(casa, pt1, pt2)):
+                    continue
+                if(casa["isInside"]):
+                    casa["restricao"] = [int(is_res_x), int(is_res_y)]
+                    pts.append(casa)
+                    print(f"adcionado restrição em: {casa}")
+        return pts
+
+    def verifica_u33(self, pt1, pt2):
+        for i, linha in enumerate(self.grid):
+            for j, casa in enumerate(linha):
+                if(not self.isInsideBox(casa, pt1, pt2)):
+                    continue
+                if(casa["isInside"]):
+                    self.u33 = casa["pos"]

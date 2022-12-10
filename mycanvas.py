@@ -13,9 +13,9 @@ import json
 from pprint import pprint
 from mygrid import MyGrid
 
-from tkinter.messagebox import showinfo
+from tkinter.messagebox import showinfo, askyesno
 from tkinter import Radiobutton, Tk, Button, IntVar
-from tkinter.simpledialog import askfloat
+from tkinter.simpledialog import askfloat, askinteger
 
 
 class MyCanvas(QtOpenGL.QGLWidget):
@@ -35,7 +35,7 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.m_pt1 = QtCore.QPointF(0.0,0.0)
         self.m_hmodel = HeModel()
         self.m_controller = HeController(self.m_hmodel)
-        self.colorList = [(0,1,0),(0,0,1),(1,1,0),(1,0,1),(0,1,1),(1,0.5,0.5),(0.5,1,0.5),(0.5,0.5,1)]
+        self.colorList = [(0.7,0.7,0.7),(153/255,153/255,1),(153/255,204/255,1),(204/255,1,1),(153/255,1,15/255),(102/255,1,204/255)]
         self.grid = None
         self.is_selecting = False
         self.outline = []
@@ -155,7 +155,7 @@ class MyCanvas(QtOpenGL.QGLWidget):
         
         for ol in self.outline:
             for point in ol:
-                glColor(1.0, 0.0, 0.0)
+                glColor(1.0, 0, 0)
                 glBegin(GL_POINTS)
                 glVertex2f(point["x"], point["y"])
                 glEnd()
@@ -246,7 +246,7 @@ class MyCanvas(QtOpenGL.QGLWidget):
         elif self.is_cc:
             self.set_curve_on_outline(pt0_U, pt1_U)
         else:
-            pass
+            self.set_initial_conditions(pt0_U, pt1_U)
 
             
 
@@ -273,6 +273,7 @@ class MyCanvas(QtOpenGL.QGLWidget):
 
     def set_grid(self, espacamento):
         self.grid = MyGrid()
+        self.outline = []
         pudim = self.m_hmodel.getPatches()
         if len(pudim) == 0:
             root = Tk()
@@ -307,27 +308,14 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.set_grid(espacamento)
     
     def pvcExportJson(self):
-        connect = self.grid.pega_matriz_connect()
-        # pprint(connect)
-        pontos = self.grid.gera_pontos()
-        # pprint(pontos)
-        restricao = self.grid.gera_restricoes()
-        # pprint(restricao)
-        forca = self.grid.gera_forca() 
-        # pprint(forca)
-
-        print(f"quantidade de pontos ({self.grid.qtd_x * self.grid.qtd_y}, pontos em x {self.grid.qtd_x}, pontos em y {self.grid.qtd_y})\n")
-
-        
-        # points = self.fillBB(_r)
+        connect = self.grid.pega_matriz_connect_contorno()
+        cc = self.grid.gera_CC()
         json_data = {}
-        json_data["coords"] = pontos
         json_data["connect"] = connect
-        json_data["F"] = forca
-        json_data["restrs"] = restricao
-
-        with open(f'data({self.grid.qtd_x * self.grid.qtd_y}p).json', 'w') as outfile:
+        json_data["cc"] = cc
+        with open(f'PVC({self.grid.qtd_x * self.grid.qtd_y}p).json', 'w') as outfile:
             json.dump(json_data, outfile)
+        return
     
 
     def set_curve_on_model(self, pt0_U, pt1_U):
@@ -363,8 +351,65 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.is_selecting = True
         self.set_grid(espacamento)
 
+    def set_initial_conditions(self, pt0_U, pt1_U):
+        root = Tk()
+        var = IntVar()
+        restr = Radiobutton(root, text="Restrição", variable=var, value=0)
+        restr.pack()
+        forca = Radiobutton(root, text="Força", variable=var, value=1)
+        forca.pack()
+        u33 = Radiobutton(root, text="Ponto", variable=var, value=2)
+        u33.pack()
+        # criar botao para confirmar no root
+        button = Button(root, text="Confirmar", command=root.destroy)
+        button.pack()
+        root.mainloop()
+        option = var.get()
+        if(option == 1):
+            forca_x = askfloat("Força", "força na direção do eixo X", initialvalue=1.0)
+            forca_y = askfloat("Força", "força na direção do eixo Y", initialvalue=1.0)
+            self.outline.append(self.grid.atualiza_forca(pt0_U, pt1_U, forca_x, forca_y))
+        elif(option == 0):
+            restr_x = askyesno("Restrição", "restringe movimento no eixo X?")
+            restr_y = askyesno("Restrição", "restringe movimento no eixo Y?")
+            self.outline.append(self.grid.atualiza_restricao(pt0_U, pt1_U, restr_x, restr_y))
+        else:
+            self.grid.verifica_u33(pt0_U, pt1_U)
+        # condition = askfloat("N", "Insira o valor da condição de contorno", initialvalue=1.0)
+
+
     def pviExportJson(self):
-            return
+        connect = self.grid.pega_matriz_connect()
+        # pprint(connect)
+        pontos = self.grid.gera_pontos()
+        # pprint(pontos)
+        restricao = self.grid.gera_restricoes()
+        # pprint(restricao)
+        forca = self.grid.gera_forca() 
+        # pprint(forca)
+        N = askinteger("passos", "digite a quantidade de passo", initialvalue=600)
+        h = askfloat("passo", "digite o tamanho do passo", initialvalue=0.00004)
+        mass = askfloat("massa", "digite o valor da massa", initialvalue=7850.0)
+        k = askfloat("kspr", "digite a constante elastica", initialvalue=210000000000.0)
+        u33 = self.grid.u33
+        print(f"quantidade de pontos ({self.grid.qtd_x * self.grid.qtd_y}, pontos em x {self.grid.qtd_x}, pontos em y {self.grid.qtd_y})\n")
+
+        
+        # points = self.fillBB(_r)
+        json_data = {}
+        json_data["ponto"] = u33
+        json_data["qtdpassos"] = N
+        json_data["tampasso"] = h
+        json_data["mass"] = mass
+        json_data["kspr"] = k
+        json_data["coords"] = pontos
+        json_data["connect"] = connect
+        json_data["F"] = forca
+        json_data["restrs"] = restricao
+
+        with open(f'PVI({self.grid.qtd_x * self.grid.qtd_y}p).json', 'w') as outfile:
+            json.dump(json_data, outfile)
+        return
     
 
 
@@ -374,4 +419,8 @@ class MyCanvas(QtOpenGL.QGLWidget):
         self.repaint()
 
     def exportJson(self):
+        if(self.is_cc):
+            self.pvcExportJson()
+        else:
+            self.pviExportJson()
         return
